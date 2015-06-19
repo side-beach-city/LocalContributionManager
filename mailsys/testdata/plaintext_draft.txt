@@ -1,0 +1,44 @@
+Return-Path: <takamichie@icloud.com>
+Received: from fsav405.sakura.ne.jp (fsav405.sakura.ne.jp [133.242.250.104])
+	by www1457.sakura.ne.jp (8.14.5/8.14.5) with ESMTP id t5HEAmQs037157
+	for <draft@furatto.hama-commu.net>; Wed, 17 Jun 2015 23:10:48 +0900 (JST)
+	(envelope-from takamichie@icloud.com)
+Received: from www1457.sakura.ne.jp (219.94.163.67)
+ by fsav405.sakura.ne.jp (F-Secure/virusgw_smtp/412/fsav405.sakura.ne.jp);
+ Wed, 17 Jun 2015 23:10:48 +0900 (JST)
+X-Virus-Status: clean(F-Secure/virusgw_smtp/412/fsav405.sakura.ne.jp)
+Received: from st13p21im-asmtp002.me.com (st13p21im-asmtp002.me.com [17.164.152.161])
+	by www1457.sakura.ne.jp (8.14.5/8.14.5) with ESMTP id t5HEAlw0037153
+	(version=TLSv1/SSLv3 cipher=DHE-RSA-AES256-SHA bits=256 verify=NO)
+	for <draft@furatto.hama-commu.net>; Wed, 17 Jun 2015 23:10:48 +0900 (JST)
+	(envelope-from takamichie@icloud.com)
+Received: from [192.168.13.2]
+ (124x34x194x241.ap124.ftth.ucom.ne.jp [124.34.194.241])
+ by st13p21im-asmtp002.me.com
+ (Oracle Communications Messaging Server 7.0.5.35.0 64bit (built Mar 31 2015))
+ with ESMTPSA id <0NQ300DPYE1DHJ10@st13p21im-asmtp002.me.com> for
+ draft@furatto.hama-commu.net; Wed, 17 Jun 2015 14:10:28 +0000 (GMT)
+From: =?iso-2022-jp?B?GyRCOWI4K0NOMVEbKEI=?= <takamichie@icloud.com>
+Content-type: text/plain; charset=iso-2022-jp
+Content-transfer-encoding: 7bit
+MIME-version: 1.0 (1.0)
+Subject: =?iso-2022-jp?B?GyRCJVElPSUzJXMkRyQiJD0kXCJ2GyhCIA==?=
+ =?iso-2022-jp?B?U2NyYXRjaBskQiRHJCskcxsoQg==?=
+ =?iso-2022-jp?B?GyRCJD8kcyVXJW0lMCVpJWAbKEI=?=
+Message-id: <11315098-CA2C-4AFA-AD95-CC6D56BDCDE8@icloud.com>
+Date: Wed, 17 Jun 2015 23:10:24 +0900
+To: "draft@furatto.hama-commu.net" <draft@furatto.hama-commu.net>
+X-Mailer: iPhone Mail (12F70)
+X-Proofpoint-Virus-Version: vendor=fsecure
+ engine=2.50.10432:5.14.151,1.0.33,0.0.0000
+ definitions=2015-06-17_05:2015-06-16,2015-06-17,1970-01-01 signatures=0
+X-Proofpoint-Spam-Details: rule=notspam policy=default score=0 spamscore=0
+ suspectscore=0 phishscore=0 adultscore=0 bulkscore=0 classifier=spam adjust=0
+ reason=mlx scancount=1 engine=7.0.1-1412110000 definitions=main-1506170236
+
+日時:2015/06/28 13:30〜15:00(開場13:40〜) 
+費用:200（資料代） 
+定員:9組 
+概要:パソコンを使ってあそんでみよう！ 
+
+パソコンは趣味で使うことも出来るものです。 
