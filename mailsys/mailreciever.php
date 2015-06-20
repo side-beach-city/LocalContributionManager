@@ -187,6 +187,7 @@ class MailReciever{
     $doc = "/*\n";
     $doc .= sprintf("  Title:%s\n", $content["title"]);
     $doc .= sprintf("  Date:%s\n", $content["date"]);
+    $doc .= sprintf("  Author:%s\n", preg_replace("/@[^>]+/",  "", $this->getHeader("from"))); // mdファイルに直接アクセスされたときのために、メールアドレスの@以降は削る
     $doc .= sprintf("  Description:%s\n", $content["description"]);
     if(!empty($this->attaches)){
       $doc .= sprintf("  Image:%s\n", implode(",", $this->attaches));
