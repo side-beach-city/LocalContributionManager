@@ -49,74 +49,8 @@ class MailReciever{
   ///
   public function createMarkdown() {
     $subject = $this->getHeader("subject");
-    $body = $this->body;
-    $lines = explode("\n", str_replace(array("\r\n", "\r"), "\n", $body));
-    $header = array("title" => $subject);
-    // ヘッダ解析
-    while(($line = array_shift($lines)) != ""){
-      $nv = explode(":", str_replace("：", ":", $line), 2);
-      if(sizeof($nv) >= 2){
-        list($name, $value) = $nv;
-        switch($name){
-          case "日時":
-          case "Date":
-            list($date, $time) = explode(" ", str_replace("　", " ", $value), 2);
-            $header["date"] = trim($date);
-            if($time){
-              $header["time"] = trim($time);
-            }
-            break;
-          case "費用":
-          case "expence":
-            $header["expence"] = trim($value);
-            break;
-          case "定員":
-          case "Capacity:":
-            $header["capacity"] = trim($value);
-            break;
-          case "概要":
-          case "Summary":
-            $header["description"] = trim($value);
-            break;
-        }
-      }
-    }
-
-    // エラーチェック
-    if(!array_key_exists("title", $header) || empty($header["title"])){
-      throw new MailParseException(ERROR_NOTFOUND_TITLE . ERROR_GUIDANCE_RESENDMAIL);
-    }
-    if(!array_key_exists("date", $header)){
-      throw new MailParseException(ERROR_NOTFOUND_DATE . ERROR_GUIDANCE_RESENDMAIL);
-    }
-    if(!array_key_exists("description", $header)){
-      throw new MailParseException(ERROR_NOTFOUND_DESCRIPTION . ERROR_GUIDANCE_RESENDMAIL);
-    }
-    
-    // ドキュメント生成
-    $doc = "/*\n";
-    $doc .= sprintf("  Title:%s\n", $header["title"]);
-    $doc .= sprintf("  Date:%s\n", $header["date"]);
-    $doc .= sprintf("  Description:%s\n", $header["description"]);
-    if(!empty($this->attaches)){
-      $doc .= "  Image:";
-      foreach($this->attaches as $attach){
-        $doc .= $attach . ",";
-      }
-      $doc .= "\n";
-    }
-    $doc .= "*/\n";
-    if(array_key_exists("time", $header)) {
-      $doc .= sprintf("%s:%s %s\n", DOC_DATETIME_NAME, $header["date"], $header["time"]);
-    }
-    if(array_key_exists("expence", $header)) {
-      $doc .= sprintf("%s:%s\n", DOC_EXPENCE_NAME, $header["expence"]);
-    }
-    if(array_key_exists("capacity", $header)) {
-      $doc .= sprintf("%s:%s\n", DOC_CAPACITY_NAME, $header["capacity"]);
-    }
-    $doc .= "\n";
-    $doc .= implode("\n", $lines);
+    $content = $this->parseMailBodyHeader(array("title" => $subject), $this->body);
+    $doc = $this->_createMarkdown($content);
     
     // 保存
     $dir = $this->getContentDir(); 
@@ -171,6 +105,89 @@ class MailReciever{
     if($ret != true){
       throw new Exception($ret->getMessage());
     }
+  }
+
+  ///
+  /// メール文を解析し、コンテントリストに格納する
+  ///
+  /// $base ... コンテントリストを格納する配列。最初に入れておきたいデータがあれば、ここに指定する。
+  /// $text ... メール本文
+  /// return ... コンテントリスト
+  ///
+  protected function parseMailBodyHeader($base, $text) {
+    $lines = explode("\n", str_replace(array("\r\n", "\r"), "\n", $text));
+    $content = $base;
+    // ヘッダ解析
+    while(($line = array_shift($lines)) != ""){
+      $nv = explode(":", str_replace("：", ":", $line), 2);
+      if(sizeof($nv) >= 2){
+        list($name, $value) = $nv;
+        switch($name){
+          case "日時":
+          case "Date":
+            list($date, $time) = explode(" ", str_replace("　", " ", $value), 2);
+            $content["date"] = trim($date);
+            if($time){
+              $content["time"] = trim($time);
+            }
+            break;
+          case "費用":
+          case "expence":
+            $content["expence"] = trim($value);
+            break;
+          case "定員":
+          case "Capacity:":
+            $content["capacity"] = trim($value);
+            break;
+          case "概要":
+          case "Summary":
+            $content["description"] = trim($value);
+            break;
+        }
+      }
+    }
+    $content["body"] = implode("\n", $lines);
+    return $content;
+  }
+
+  ///
+  /// コンテントリストからMarkdownデータを作成する
+  ///
+  /// $content ... コンテントリスト
+  ///
+  protected function _createMarkdown($content) {
+    // エラーチェック
+    if(!array_key_exists("title", $content) || empty($content["title"])){
+      throw new MailParseException(ERROR_NOTFOUND_TITLE . ERROR_GUIDANCE_RESENDMAIL);
+    }
+    if(!array_key_exists("date", $content)){
+      throw new MailParseException(ERROR_NOTFOUND_DATE . ERROR_GUIDANCE_RESENDMAIL);
+    }
+    if(!array_key_exists("description", $content)){
+      throw new MailParseException(ERROR_NOTFOUND_DESCRIPTION . ERROR_GUIDANCE_RESENDMAIL);
+    }
+
+    // ドキュメント生成
+    $doc = "/*\n";
+    $doc .= sprintf("  Title:%s\n", $content["title"]);
+    $doc .= sprintf("  Date:%s\n", $content["date"]);
+    $doc .= sprintf("  Description:%s\n", $content["description"]);
+    if(!empty($this->attaches)){
+      $doc .= sprintf("  Image:%s\n", implode(",", $this->attaches));
+    }
+    $doc .= "*/\n";
+    if(array_key_exists("time", $content)) {
+      $doc .= sprintf("%s:%s %s\n", DOC_DATETIME_NAME, $content["date"], $content["time"]);
+    }
+    if(array_key_exists("expence", $content)) {
+      $doc .= sprintf("%s:%s\n", DOC_EXPENCE_NAME, $content["expence"]);
+    }
+    if(array_key_exists("capacity", $content)) {
+      $doc .= sprintf("%s:%s\n", DOC_CAPACITY_NAME, $content["capacity"]);
+    }
+    $doc .= "\n";
+    $doc .= $content["body"];
+    return $doc;
   }
   
   /// 
