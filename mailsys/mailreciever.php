@@ -8,6 +8,7 @@ define('ERROR_NOTFOUND_DATE', "原稿に日付の記載が見つかりません�
 define('ERROR_NOTFOUND_DESCRIPTION', "原稿に概要の記載が見つかりませんでした。\n");
 define('ERROR_GUIDANCE_RESENDMAIL', 'もう一度原稿を送り直してください');
 define('ERROR_UNKNOWN_FORMAT', '未知のメール書式です。管理者に連絡してください。');
+define('ERROR_UNKNOWN_ATTACHMENT', '対応していないファイルが添付されています。対応している添付ファイルは、.png, .gif, .jpgのみです');
 define('DOC_DATETIME_NAME', '日時');
 define('DOC_EXPENCE_NAME', '費用');
 define('DOC_CAPACITY_NAME', '定員');
@@ -18,11 +19,13 @@ class MailReciever{
   private $config;
   private $headers;
   private $body;
+  private $attaches;
   
   public function __construct(){
     require_once("Mail/mimeDecode.php");
     require_once("Mail.php");
     $this->config = @include_once(ROOT_DIR . 'config.php');
+    $this->attaches = array();
   }
   
   ///
@@ -38,16 +41,7 @@ class MailReciever{
         'decode_headers' => true,
       ));
     $this->headers = $struct->headers;
-    switch($struct->ctype_primary){
-      case "text":
-        $this->charset = $struct->ctype_parameters['charset'];
-        $this->body = trim(mb_convert_encoding( $struct->body, mb_internal_encoding(), $this->charset ));
-        break;
-      case "multipart":
-        break;
-      default:
-        throw new MailParseException(ERROR_UNKNOWN_FORMAT);
-    }
+    $this->decodeData($struct);
   }
   
   ///
@@ -104,6 +98,13 @@ class MailReciever{
     $doc .= sprintf("  Title:%s\n", $header["title"]);
     $doc .= sprintf("  Date:%s\n", $header["date"]);
     $doc .= sprintf("  Description:%s\n", $header["description"]);
+    if(!empty($this->attaches)){
+      $doc .= "  Image:";
+      foreach($this->attaches as $attach){
+        $doc .= $attach . ",";
+      }
+      $doc .= "\n";
+    }
     $doc .= "*/\n";
     if(array_key_exists("time", $header)) {
       $doc .= sprintf("%s:%s %s\n", DOC_DATETIME_NAME, $header["date"], $header["time"]);
@@ -118,12 +119,8 @@ class MailReciever{
     $doc .= implode("\n", $lines);
     
     // 保存
-    $fn = $this->getHeader("message-id") . ".md";
-    $fn = str_replace(array("\\", "/", ":". "*", "?", "<", ">", "|", " "), "", $fn);
-    $dir = ROOT_DIR . $this->config['content_dir'];
-    if(!file_exists($dir)){
-      mkdir($dir);
-    }
+    $dir = $this->getContentDir(); 
+    $fn = $this->getUniqueFileName();
     file_put_contents($dir . $fn, mb_convert_encoding($doc, mb_internal_encoding(), MD_ENCODING));
   }
 
@@ -176,6 +173,55 @@ class MailReciever{
     }
   }
   
+  /// 
+  /// メールデコード構造体を解析してテキストを抽出する
+  ///
+  /// $struct ... メールデコード構造体
+  ///
+  protected function decodeData($struct) {
+    if(!empty($struct->parts)){
+      foreach($struct->parts as $part){
+        $this->decodeData($part);
+      }
+    }else{
+      switch($struct->ctype_primary){
+        case "text":
+          switch($struct->ctype_secondary){
+            case "plain":
+              $this->charset = $struct->ctype_parameters['charset'];
+              $this->body = trim(mb_convert_encoding( $struct->body, mb_internal_encoding(), $this->charset ));
+              break;
+            case "html":
+              // 無視
+              break;
+            default:
+              break;
+          }
+          break;
+        case "image":
+          $this->addAttachmentFile($struct);
+          break;
+        default:
+          break;
+      }
+    }
+  }
+
+  /// 
+  /// メールデコード構造体に含まれる添付ファイルを保存する。
+  ///
+  /// $struct ... メールデコード構造体
+  ///
+  protected function addAttachmentFile($struct) {
+    $dir = $this->getContentDir();
+    $fn = $struct->d_parameters['filename'];
+    $fn = $this->getUniqueFileName(
+      sprintf(".%s%s", substr($fn, 0, strrpos($fn, '.')), 
+        $this->fileTypeToExtension($struct->ctype_primary, $struct->ctype_secondary)));
+    file_put_contents($dir . $fn, $struct->body);
+    $this->attaches[] = $fn;
+  }
+  
   ///
   /// Webhookに送信を行う内部関数
   ///
@@ -210,6 +256,49 @@ class MailReciever{
       }
       curl_close($curl);
     }
+  }
+
+  ///
+  /// ユニークなファイル名を取得する。現時点のバージョンではMessage-IDを使用する
+  ///
+  /// $ext ... 拡張子。省略時は.md
+  /// return ... ユニークなファイル名
+  ///
+  protected function getUniqueFileName($ext = ".md") {
+    $fn = $this->getHeader("message-id") . $ext;
+    $fn = str_replace(array("\\", "/", ":". "*", "?", "<", ">", "|", " "), "", $fn); // ファイル名に使用できない文字は削除
+    return $fn;
+  }
+
+  ///
+  /// Picoのコンテントディレクトリを取得する
+  ///
+  /// return ... コンテントディレクトリ
+  ///
+  protected function getContentDir(){
+    $dir = ROOT_DIR . $this->config['content_dir'];
+    if(!file_exists($dir)){
+      mkdir($dir);
+    }
+    return $dir;
+  }
+
+  ///
+  /// ファイルタイプ(ctype_primaryとctype_secondary)から、拡張子を導き出す
+  protected function fileTypeToExtension($primarytype, $secondarytype) {
+    $type = $primarytype . "/" . $secondarytype;
+    $db = array(
+      'image/jpeg' => '.jpeg',
+      'image/gif' => '.gif',
+      'image/png' => '.png',
+    );
+    $ext;
+    if(array_key_exists($type, $db)){
+      $ext = $db[$type];
+    }else{
+      throw new MailParseException(ERROR_UNKNOWN_ATTACHMENT);
+    }
+    return $ext;
   }
   
   private function getHeader($part) {
