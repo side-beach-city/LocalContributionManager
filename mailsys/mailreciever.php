@@ -146,7 +146,15 @@ class MailReciever{
         }
       }
     }
-    $content["body"] = implode("\n", $lines);
+    
+    // 署名をカットしつつ、それ以外の文章をbodyに
+    $content["body"] = "";
+    foreach($lines as $line){
+      if(preg_match('/^-{2} ?$/', $line)){
+        break;
+      }
+      $content["body"] .= $line . "\n";
+    }
     return $content;
   }
 
