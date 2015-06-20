@@ -21,6 +21,7 @@ class MailReciever{
   private $body;
   private $content;
   private $attaches;
+  private $markdown;
   
   public function __construct(){
     require_once("Mail/mimeDecode.php");
@@ -45,18 +46,16 @@ class MailReciever{
     $this->decodeData($struct);
     $subject = $this->getHeader("subject");
     $this->content = $this->parseMailBodyHeader(array("title" => $subject), $this->body);
+    $this->markdown = $this->_createMarkdown($this->content);
   }
   
   ///
   /// Markdownファイルを生成する
   ///
   public function createMarkdown() {
-    $doc = $this->_createMarkdown($this->content);
-    
-    // 保存
     $dir = $this->getContentDir(); 
     $fn = $this->getUniqueFileName();
-    file_put_contents($dir . $fn, mb_convert_encoding($doc, mb_internal_encoding(), MD_ENCODING));
+    file_put_contents($dir . $fn, mb_convert_encoding($this->markdown, mb_internal_encoding(), MD_ENCODING));
   }
 
   ///
