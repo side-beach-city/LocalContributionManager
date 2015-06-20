@@ -229,7 +229,7 @@ class MailReciever{
   /// $name ... 送信者名
   /// $icon ... アイコン
   ///
- protected function _sendWebhook($text, $name, $icon = ":email") {
+  protected function _sendWebhook($text, $name, $icon = ":email") {
     $hookaddr = $this->config["mailpost"]["hookurl"];
     if($hookaddr){
       $payload = array(
