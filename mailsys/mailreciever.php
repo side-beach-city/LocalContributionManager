@@ -6,14 +6,15 @@ define('ERROR_NOTFOUND_TITLE', "原稿にタイトルの記載が見つかりま
 define('ERROR_NOTFOUND_DATE', "原稿に日付の記載が見つかりませんでした。\n");
 define('ERROR_NOTFOUND_DESCRIPTION', "原稿に概要の記載が見つかりませんでした。\n");
 define('ERROR_GUIDANCE_RESENDMAIL', 'もう一度原稿を送り直してください');
+define('ERROR_UNKNOWN_FORMAT', '未知のメール書式です。管理者に連絡してください。');
 define('DOC_DATETIME_NAME', '日時');
 define('DOC_EXPENCE_NAME', '費用');
 define('DOC_CAPACITY_NAME', '定員');
 
 class MailReciever{
 
+  private $charset;
   private $config;
-  private $recipients;
   private $headers;
   private $body;
   
@@ -30,18 +31,29 @@ class MailReciever{
   ///
   public function parseMail($text) {
     $decoder = & new Mail_mimeDecode( $text );
-    $parts = $decoder->getSendArray();
-    list($recipients, $headers, $body) = $parts;
-    $this->recipients = $recipients;
-    $this->headers = $headers;
-    $this->body = trim(mb_convert_encoding( $body, "UTF-8", "JIS" ));
+    $struct = $decoder->decode(array(
+        'include_bodies' => true,
+        'decode_bodies' => true,
+        'decode_headers' => true,
+      ));
+    $this->headers = $struct->headers;
+    switch($struct->ctype_primary){
+      case "text":
+        $this->charset = $struct->ctype_parameters['charset'];
+        $this->body = trim(mb_convert_encoding( $struct->body, mb_internal_encoding(), $this->charset ));
+        break;
+      case "multipart":
+        break;
+      default:
+        throw new MailParseException(ERROR_UNKNOWN_FORMAT);
+    }
   }
   
   ///
   /// Markdownファイルを生成する
   ///
   public function createMarkdown() {
-    $subject = $this->getHeader("Subject");
+    $subject = $this->getHeader("subject");
     $body = $this->body;
     $lines = explode("\n", str_replace(array("\r\n", "\r"), "\n", $body));
     $header = array("title" => $subject);
@@ -76,7 +88,7 @@ class MailReciever{
     }
 
     // エラーチェック
-    if(!array_key_exists("title", $header)){
+    if(!array_key_exists("title", $header) || empty($header["title"])){
       throw new MailParseException(ERROR_NOTFOUND_TITLE . ERROR_GUIDANCE_RESENDMAIL);
     }
     if(!array_key_exists("date", $header)){
@@ -105,7 +117,7 @@ class MailReciever{
     $doc .= implode("\n", $lines);
     
     // 保存
-    $fn = $this->getHeader("Message-id") . ".md";
+    $fn = $this->getHeader("message-id") . ".md";
     $fn = str_replace(array("\\", "/", ":". "*", "?", "<", ">", "|", " "), "", $fn);
     $dir = ROOT_DIR . $this->config['content_dir'];
     if(!file_exists($dir)){
@@ -120,8 +132,8 @@ class MailReciever{
   /// $success ... メールのパースが成功した場合はtrue
   ///
   public function sendWebhook($success) {
-    $body = sprintf("From:%s\n\n----\n%s\n----", $this->getHeader("From"), $this->body);
-    $subject = (!$success ? "Parse Error:" : "Parse Success:") . $this->getHeader("Subject");
+    $body = sprintf("From:%s\n\n----\n%s\n----", $this->getHeader("from"), $this->body);
+    $subject = (!$success ? "Parse Error:" : "Parse Success:") . $this->getHeader("subject");
     $icon = $success ? ":email:" : ":x:";
     $this->_sendWebhook($body, $subject, $icon);
   }
@@ -153,7 +165,7 @@ class MailReciever{
     );
    
     $mail_object =& Mail::factory("SMTP", $mail_options); 
-    $to = $this->getHeader("From");
+    $to = $this->getHeader("from");
     $to = preg_replace_callback("/(.*?)<([^>]+)>/",  function($m){
         return sprintf('"%s" <%s>', mb_encode_mimeheader($m[1], MAIL_ENCODING), $m[2]);
       }, $to);
@@ -204,7 +216,7 @@ class MailReciever{
   }
   
   private function getMailContent($text) {
-    return mb_decode_mimeheader( $text );
+    return mb_convert_encoding( $text, mb_internal_encoding(), $this->charset );
   }
 }
 
