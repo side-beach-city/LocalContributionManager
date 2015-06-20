@@ -1,6 +1,7 @@
 <?php
 define('ROOT_DIR', realpath(dirname(__FILE__) . '/../') . '/');
 define('MAIL_ENCODING', 'ISO-2022-JP');
+define('MD_ENCODING', 'UTF-8');
 // 言語（そのうち真面目にローカライズするかも？）
 define('ERROR_NOTFOUND_TITLE', "原稿にタイトルの記載が見つかりませんでした。\n");
 define('ERROR_NOTFOUND_DATE', "原稿に日付の記載が見つかりませんでした。\n");
@@ -123,7 +124,7 @@ class MailReciever{
     if(!file_exists($dir)){
       mkdir($dir);
     }
-    file_put_contents($dir . $fn, $doc);
+    file_put_contents($dir . $fn, mb_convert_encoding($doc, mb_internal_encoding(), MD_ENCODING));
   }
 
   ///
