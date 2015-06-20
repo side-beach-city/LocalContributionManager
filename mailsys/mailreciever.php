@@ -19,6 +19,7 @@ class MailReciever{
   private $config;
   private $headers;
   private $body;
+  private $content;
   private $attaches;
   
   public function __construct(){
@@ -42,15 +43,15 @@ class MailReciever{
       ));
     $this->headers = $struct->headers;
     $this->decodeData($struct);
+    $subject = $this->getHeader("subject");
+    $this->content = $this->parseMailBodyHeader(array("title" => $subject), $this->body);
   }
   
   ///
   /// Markdownファイルを生成する
   ///
   public function createMarkdown() {
-    $subject = $this->getHeader("subject");
-    $content = $this->parseMailBodyHeader(array("title" => $subject), $this->body);
-    $doc = $this->_createMarkdown($content);
+    $doc = $this->_createMarkdown($this->content);
     
     // 保存
     $dir = $this->getContentDir(); 
