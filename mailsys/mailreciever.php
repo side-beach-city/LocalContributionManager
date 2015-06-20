@@ -64,8 +64,16 @@ class MailReciever{
   /// $success ... メールのパースが成功した場合はtrue
   ///
   public function sendWebhook($success) {
-    $body = sprintf("From:%s\n\n----\n%s\n----", $this->getHeader("from"), $this->body);
-    $subject = (!$success ? "Parse Error:" : "Parse Success:") . $this->getHeader("subject");
+    $body;
+    $subject;
+    if($success){
+      $body = $this->markdown;
+      $subject = $this->getHeader("subject");
+    }else{
+      $body = sprintf("From:%s\n\n----\n%s\n----", $this->getHeader("from"), 
+        empty($this->body) ? "Decode Failed" : $this->body );
+      $subject = "E:" . $this->getHeader("subject");
+    }
     $icon = $success ? ":email:" : ":x:";
     $this->_sendWebhook($body, $subject, $icon);
   }
