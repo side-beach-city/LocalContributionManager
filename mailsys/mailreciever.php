@@ -104,7 +104,7 @@ class MailReciever{
       'password'  => $this->config["mailpost"]["mailbox"]["password"],
     );
    
-    $mail_object =& Mail::factory("SMTP", $mail_options); 
+    $mail_object =& Mail::factory("sendmail", $mail_options); 
     $to = $this->getHeader("from");
     $to = preg_replace_callback("/(.*?)<([^>]+)>/",  function($m){
         return sprintf('"%s" <%s>', mb_encode_mimeheader($m[1], MAIL_ENCODING), $m[2]);
