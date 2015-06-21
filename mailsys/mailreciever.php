@@ -15,7 +15,6 @@ define('DOC_CAPACITY_NAME', '定員');
 
 class MailReciever{
 
-  private $charset;
   private $config;
   private $headers;
   private $body;
@@ -159,7 +158,7 @@ class MailReciever{
     // 署名をカットしつつ、それ以外の文章をbodyに
     $content["body"] = "";
     foreach($lines as $line){
-      if(preg_match('/^-{2} ?$/', $line)){
+      if(preg_match('/^-{2} *$/', $line)){
         break;
       }
       $content["body"] .= $line . "\n";
