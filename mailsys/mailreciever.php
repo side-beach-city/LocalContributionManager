@@ -222,8 +222,8 @@ class MailReciever{
         case "text":
           switch($struct->ctype_secondary){
             case "plain":
-              $this->charset = $struct->ctype_parameters['charset'];
-              $this->body = trim(mb_convert_encoding( $struct->body, mb_internal_encoding(), $this->charset ));
+              $charset = $struct->ctype_parameters['charset'];
+              $this->body = trim(mb_convert_encoding( $struct->body, mb_internal_encoding(), $charset ));
               break;
             case "html":
               // 無視
@@ -340,7 +340,7 @@ class MailReciever{
   }
   
   private function getMailContent($text) {
-    return mb_convert_encoding( $text, mb_internal_encoding(), $this->charset );
+    return mb_convert_encoding( $text, mb_internal_encoding(), MAIL_ENCODING );
   }
 }
 
