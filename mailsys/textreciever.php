@@ -1,5 +1,5 @@
 <?php
-require_once('mailreciever.php');
+require_once(__DIR__ . '/mailreciever.php');
 
 try{
   $reciever = new MailReciever();
