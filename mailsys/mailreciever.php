@@ -26,6 +26,7 @@ class MailReciever{
   public function __construct(){
     require_once("Mail/mimeDecode.php");
     require_once("Mail.php");
+    mb_internal_encoding("UTF-8");
     $this->config = @include_once(ROOT_DIR . 'config.php');
     $this->attaches = array();
   }
